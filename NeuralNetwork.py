@@ -6,20 +6,26 @@ class NeuralNetwork():
     nb_w: np.ndarray
     biais: np.ndarray
 
-    def __init__(self, lr=0.01):
+    def __init__(self, lr=0.05):
         self.lr = lr
-        self.W1 = None;
-        self.W2 = None;
+        self.W1 = None
+        self.W2 = None
         self.W3 = None
-        self.b1 = None;
-        self.b2 = None;
+        self.b1 = None
+        self.b2 = None
         self.b3 = None
-        self.Z1 = None;
-        self.Z2 = None;
+        self.Z1 = None
+        self.Z2 = None
         self.Z3 = None
-        self.A1 = None;
-        self.A2 = None;
+        self.A1 = None
+        self.A2 = None
         self.A3 = None
+        self.vW1 = None
+        self.vW2 = None
+        self.vW3 = None
+        self.vB1 = None
+        self.vB2 = None
+        self.vB3 = None
         self.loss_history = []
         self.accuracy_history = []
         self.init_weights()
@@ -32,6 +38,14 @@ class NeuralNetwork():
         self.b1 = np.zeros((128, 1))
         self.b2 = np.zeros((64, 1))
         self.b3 = np.zeros((10, 1))
+
+        # initialisation of all velocities
+        self.vW1 = np.zeros_like(self.W1)
+        self.vW2 = np.zeros_like(self.W2)
+        self.vW3 = np.zeros_like(self.W3)
+        self.vB1 = np.zeros_like(self.b1)
+        self.vB2 = np.zeros_like(self.b2)
+        self.vB3 = np.zeros_like(self.b3)
 
     def predict(self, X: np.ndarray):
         self.Z1 = self.W1 @ X + self.b1
@@ -78,14 +92,29 @@ class NeuralNetwork():
         dZ2 = self.W3.T @ dZ3 * self.deriv_tanh(self.Z2)
         dZ1 = self.W2.T @ dZ2 * self.deriv_tanh(self.Z1)
 
-        self.W3 = self.W3 - (dZ3 @ self.A2.T) * self.lr
-        self.b3 = self.b3 - np.sum(dZ3, axis=1, keepdims=True) * self.lr
+        grad_W3 = (dZ3 @ self.A2.T)
+        self.vW3 = self.momentum(grad_W3, self.vW3)
+        self.W3 = self.W3 - self.vW3 * self.lr
 
-        self.W2 = self.W2 - (dZ2 @ self.A1.T) * self.lr
-        self.b2 = self.b2 - np.sum(dZ2, axis=1, keepdims=True) * self.lr
+        grad_b3 = np.sum(dZ3, axis=1, keepdims=True)
+        self.vB3 = self.momentum(grad_b3, self.vB3)
+        self.b3 = self.b3 - self.vB3 * self.lr
 
-        self.W1 = self.W1 - (dZ1 @ X.T) * self.lr
-        self.b1 = self.b1 - np.sum(dZ1, axis=1, keepdims=True) * self.lr
+        grad_W2 = (dZ2 @ self.A1.T)
+        self.vW2 = self.momentum(grad_W2, self.vW2)
+        self.W2 = self.W2 - self.vW2 * self.lr
+
+        grad_b2 = np.sum(dZ2, axis=1, keepdims=True)
+        self.vB2 = self.momentum(grad_b2, self.vB2)
+        self.b2 = self.b2 - self.vB2 * self.lr
+
+        grad_W1 = (dZ1 @ X.T)
+        self.vW1 = self.momentum(grad_W1, self.vW1)
+        self.W1 = self.W1 - self.vW1 * self.lr
+
+        grad_b1 = np.sum(dZ1, axis=1, keepdims=True)
+        self.vB1 = self.momentum(grad_b1, self.vB1)
+        self.b1 = self.b1 - self.vB1 * self.lr
 
     def train(self, X_train, y_train, X_test, y_test, epochs, batch_size, view_info):
         self.init_weights()
@@ -106,7 +135,7 @@ class NeuralNetwork():
                 y_pred = self.predict(X_batch)
                 self.back_propagation(X_batch, y_batch)
 
-            if view_info == True:
+            if view_info:
                 print("Epoch : ", epoch, "/", epochs)
                 print("Loss : ", l)
                 print("Accuracy : ", acc)
@@ -124,3 +153,8 @@ class NeuralNetwork():
         plt.ylabel("Loss")
         plt.title("Apprentissage")
         plt.show()
+
+    def momentum(self, grad, v):
+        beta = 0.5
+        v = beta * v + (1 - beta) * grad
+        return v
