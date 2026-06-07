@@ -155,6 +155,6 @@ class NeuralNetwork():
         plt.show()
 
     def momentum(self, grad, v):
-        beta = 0.5
+        beta = 0.7
         v = beta * v + (1 - beta) * grad
         return v

@@ -1,9 +1,17 @@
 import numpy as np
 from tensorflow.keras.datasets import mnist
 from NeuralNetwork import *
+from vizualizer import *
 import matplotlib.pyplot as plt
+from manimAnimation import *
 
 def main():
+
+    v = Vizualizer()
+    manim = ManimAnimation()
+    manim.construct()
+    manim.forward_visualizing()
+"""
     print("Chagement de mnist...")
     nl = NeuralNetwork(0.05)
     (X_train, y_train), (X_test, y_test) = mnist.load_data()
@@ -53,5 +61,5 @@ def main():
     ax.grid(True, alpha=0.2)
     ax.plot(nl.accuracy_history, color="yellow")
 
-    plt.show()
+    plt.show()"""
 main()
