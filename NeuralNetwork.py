@@ -6,8 +6,9 @@ class NeuralNetwork():
     nb_w: np.ndarray
     biais: np.ndarray
 
-    def __init__(self, lr=0.05):
+    def __init__(self, lr=0.05, nb_neurons = (10, 10)):
         self.lr = lr
+        self.nb_neurons = nb_neurons
         self.W1 = None
         self.W2 = None
         self.W3 = None
@@ -32,11 +33,11 @@ class NeuralNetwork():
 
     def init_weights(self):
         # Using He initialization for ReLU activation functions
-        self.W1 = np.random.randn(128, 784) * np.sqrt(1 / 784)
-        self.W2 = np.random.randn(64, 128) * np.sqrt(1 / 128)
-        self.W3 = np.random.randn(10, 64) * np.sqrt(1 / 64)
-        self.b1 = np.zeros((128, 1))
-        self.b2 = np.zeros((64, 1))
+        self.W1 = np.random.randn(self.nb_neurons[0], 784) * np.sqrt(1 / 784)
+        self.W2 = np.random.randn(self.nb_neurons[1], self.nb_neurons[0]) * np.sqrt(1 / 10)
+        self.W3 = np.random.randn(10, self.nb_neurons[1]) * np.sqrt(1 / 10)
+        self.b1 = np.zeros((self.nb_neurons[0], 1))
+        self.b2 = np.zeros((self.nb_neurons[1], 1))
         self.b3 = np.zeros((10, 1))
 
         # initialisation of all velocities
