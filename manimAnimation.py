@@ -3,13 +3,16 @@ from keras.datasets import mnist
 
 from NeuralNetwork import *
 from manim import *
+from PIL import Image
 
 class ManimAnimation(Scene):
     def __init__(self):
         super().__init__()
-        self.nl = NeuralNetwork(nb_neurons=(10,10))
+        self.img = None
+        self.nl = NeuralNetwork(nb_neurons=(10,12))
         self.digit = None
         self.real_digit = None
+        self.neuron_color = YELLOW_D
         self.nb_neurons = [self.nl.W1.shape[0], self.nl.W2.shape[0], self.nl.W3.shape[0]]
         self.neurons = [[] for _ in range(len(self.nb_neurons))]
         self.train_neurons = [[] for _ in range(len(self.nb_neurons))]
@@ -21,6 +24,12 @@ class ManimAnimation(Scene):
         self.train_model()
 
     def construct(self):
+        self.draw_digit()
+
+        grid = self.draw_digit()
+
+        self.play(Create(grid))
+
         self.draw_neuron()
         self.draw_weights()
         self.set_text()
@@ -51,14 +60,14 @@ class ManimAnimation(Scene):
         for i in range(len(self.nb_neurons)):
             for j in range(self.nb_neurons[i]):
                 self.neurons[i].append(Circle(radius=self.radius))
-                self.neurons[i][j].set_fill(YELLOW, opacity=1)
-                self.neurons[i][j].set_stroke(color=YELLOW)
+                self.neurons[i][j].set_fill(self.neuron_color, opacity=1)
+                self.neurons[i][j].set_stroke(color=YELLOW_B)
 
     def set_place_first_neuron(self, neurons):
-        x = [-4, 0, 4]
+        x = [-3, 1, 5]
         for i in range(len(neurons)):
             height =  (self.radius + self.buff) * self.nb_neurons[i]
-            neurons[i][0].move_to(np.array([x[i], (height / 2) + self.nb_neurons[i] / 12, 1]))
+            neurons[i][0].move_to(np.array([x[i], (height / 1.5), 1]))
 
     def set_place_neurons(self, neurons):
         for i in range(len(self.nb_neurons)):
@@ -69,7 +78,7 @@ class ManimAnimation(Scene):
         for i in range(len(self.nb_neurons) - 1):
             for j in range(self.nb_neurons[i]):
                 for t in range(self.nb_neurons[i + 1]):
-                    line = Line(self.neurons[i][j].get_center(), self.neurons[i+1][t].get_center(), color=YELLOW)
+                    line = Line(self.neurons[i][j].get_center(), self.neurons[i+1][t].get_center(), color=self.neuron_color)
                     line.set_z_index(-1)
                     line.set_stroke(width=1.8)
                     self.connexions[i].append(line)
@@ -82,9 +91,10 @@ class ManimAnimation(Scene):
             self.texts[i].next_to(neuron, RIGHT, buff=0.2)
 
     def train_model(self):
+        nb_rand = np.random.random_integers(1, 1000)
         (X_train, y_train), (X_test, y_test) = mnist.load_data()
 
-        self.digit = X_test[1]
+        self.digit = X_test[nb_rand]
 
         X_train = X_train[:10000]
         X_train = X_train / X_train.max()
@@ -99,7 +109,7 @@ class ManimAnimation(Scene):
         y_train = y_train[:10000]
         y_test = y_test[:10000]
 
-        self.real_digit = y_test[1]
+        self.real_digit = y_test[nb_rand]
 
         y_train = self.nl.one_hot(y_train)
 
@@ -123,9 +133,9 @@ class ManimAnimation(Scene):
                     weight = weights[i][t, j]
                     max_weight = weights[i].max()
                     normalize_weight = abs(weight) / max_weight
-                    r = normalize_weight * 0.969
-                    g = normalize_weight * 0.988
-                    b = normalize_weight * 0.455
+                    r = normalize_weight * self.neuron_color[0]
+                    g = normalize_weight * self.neuron_color[1]
+                    b = normalize_weight * self.neuron_color[2]
                     line = Line(self.neurons[i][j].get_center(), self.neurons[i+1][t].get_center(), color=ManimColor.from_rgb((r, g, b)))
                     line.set_stroke(width=3)
                     line.set_z_index(-1)
@@ -137,9 +147,9 @@ class ManimAnimation(Scene):
                 activation = activations[i][j][0]
                 max_activation = activations[i].max()
                 normalize_act = abs(activation) / max_activation
-                r = normalize_act * 0.969
-                g = normalize_act * 0.988
-                b = normalize_act * 0.455
+                r = normalize_act * self.neuron_color[0]
+                g = normalize_act * self.neuron_color[1]
+                b = normalize_act * self.neuron_color[2]
                 self.train_neurons[i].append(Circle(radius=self.radius))
                 self.train_neurons[i][j].set_fill(ManimColor.from_rgb((r, g, b)), opacity=1)
                 self.train_neurons[i][j].set_stroke(color=ManimColor.from_rgb((r, g, b)))
@@ -147,4 +157,17 @@ class ManimAnimation(Scene):
         self.set_place_first_neuron(self.train_neurons)
         self.set_place_neurons(self.train_neurons)
 
-        print(self.train_neurons[2][0].get_color())
+
+    def draw_digit(self):
+        taille = 0.08
+        milieu = (taille * len(self.digit)) / 2
+        grid = VGroup()
+        for i in range(len(self.digit)):
+            for j in range(len(self.digit[0])):
+                couleur = self.digit[i][j] / 255
+                square = Square(taille)
+                square.set_fill((ManimColor.from_rgb((couleur * self.neuron_color[0], couleur * self.neuron_color[1], couleur * self.neuron_color[2]))), opacity=1)
+                square.set_stroke(width=0.5, color=ManimColor.from_rgb((couleur * self.neuron_color[0], couleur * self.neuron_color[1], couleur * self.neuron_color[2])), opacity=1)
+                square.move_to((-6 + j * taille, milieu - i * taille, 0))
+                grid.add(square)
+        return grid
