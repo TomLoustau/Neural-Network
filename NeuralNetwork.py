@@ -3,11 +3,9 @@ import matplotlib.pyplot as plt
 
 
 class NeuralNetwork():
-    nb_w: np.ndarray
-    biais: np.ndarray
-
-    def __init__(self, lr=0.05, nb_neurons = (10, 10)):
+    def __init__(self, lr=0.05, beta=0.7, nb_neurons = (10, 10)):
         self.lr = lr
+        self.beta = beta
         self.nb_neurons = nb_neurons
         self.W1 = None
         self.W2 = None
@@ -68,7 +66,7 @@ class NeuralNetwork():
 
     def softmax(self, y):
         epsilon = 1e-12
-        exp = np.exp(y - np.max(y + epsilon, axis=0, keepdims=True))
+        exp = np.exp(y - np.max(y, axis=0, keepdims=True) + epsilon)
         return exp / np.sum(exp, axis=0, keepdims=True)
 
     def deriv_tanh(self, y):
@@ -147,15 +145,34 @@ class NeuralNetwork():
         correct = np.sum(y_test == y_prediction)
         return correct / y_test.shape[0]
 
-    def plot_visualisation(self):
-        plt.plot(self.loss_history)
-        plt.plot(self.accuracy_history)
-        plt.xlabel("Epochs")
-        plt.ylabel("Loss")
-        plt.title("Apprentissage")
+    def plot_visualisation(self, X_test, y_pred):
+        plt.style.use("dark_background")
+        fig = plt.figure(figsize=(10, 7))
+        fig.subplots_adjust(hspace=0.5)
+        gs = fig.add_gridspec(3, 5)
+        for i in range(0, 5):
+            rand_int = np.random.randint(100)
+            ax = fig.add_subplot(gs[0, i])
+            ax.imshow(X_test[:, rand_int].reshape(28, 28), cmap="gray")
+            ax.set_title(f"Prediction : {y_pred[rand_int]}", color="yellow")
+        ax = fig.add_subplot(gs[1, :])
+        ax.set_title("Loss")
+        ax.set_xlabel("Epochs")
+        ax.set_ylabel("Taux d'erreurs")
+        ax.fill_between(range(len(self.loss_history)), self.loss_history, alpha=0.3, color='yellow')
+        ax.grid(True, alpha=0.2)
+        ax.plot(self.loss_history, color="yellow")
+
+        ax = fig.add_subplot(gs[2, :])
+        ax.set_title("Accuracy")
+        ax.set_xlabel("Epochs")
+        ax.set_ylabel("Précision")
+        ax.fill_between(range(len(self.accuracy_history)), self.accuracy_history, alpha=0.3, color='yellow')
+        ax.grid(True, alpha=0.2)
+        ax.plot(self.accuracy_history, color="yellow")
+
         plt.show()
 
     def momentum(self, grad, v):
-        beta = 0.7
-        v = beta * v + (1 - beta) * grad
+        v = self.beta * v + (1 - self.beta) * grad
         return v
