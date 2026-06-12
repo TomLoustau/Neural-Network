@@ -1,7 +1,7 @@
 
 # Neural Network from Scratch 
 
-![Vizualisation](media/videos/manimAnimation/2160p60/ManimAnimation.mp4)
+![Vizualisation](assets/ManimAnimation.gif)
  
 A fully hand-coded neural network built from scratch using only NumPy — no PyTorch, no TensorFlow, no `model.fit()`.
  
